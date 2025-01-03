@@ -1,44 +1,22 @@
-# Variables
-PYTHON = python3
-VENV = .venv
-REQS = requirements.txt
+install:
+	pip install --upgrade pip &&\
+		pip install -r requirements.txt
 
-# Create virtual environment
-.PHONY: venv
-venv:
-	@echo "Creating virtual environment..."
-	$(PYTHON) -m venv $(VENV)
-	@echo "Virtual environment created. Run 'source $(VENV)/bin/activate' to activate."
-
-# Install dependencies
-.PHONY: install
-install: venv
-	@echo "Installing dependencies..."
-	$(VENV)/bin/pip install -r $(REQS)
-
-# Run unit tests
-.PHONY: test
 test:
-	@echo "Running tests..."
-	$(VENV)/bin/python -m pytest tests/
+	python -m pytest -vv --cov=main --cov=mylib test_*.py
 
-# Train Logistic Regression model
-.PHONY: train-lr
-train-lr:
-	@echo "Training Logistic Regression model..."
-	$(VENV)/bin/python models/logistic_regression/LR.py
+format:	
+	black *.py 
 
-# Run main application
-.PHONY: run
-run:
-	@echo "Running main application..."
-	$(VENV)/bin/python src/main.py
+lint:
+	pylint --disable=R,C --ignore-patterns=test_.*?py *.py mylib/*.py
 
-# Clean generated files
-.PHONY: clean
-clean:
-	@echo "Cleaning up temporary files..."
-	find . -type d -name '__pycache__' -exec rm -rf {} +
-	find . -type f -name '*.pyc' -delete
-	find . -type f -name '*.pkl' -delete
-	find . -type f -name '*.ipynb_checkpoints' -delete
+container-lint:
+	docker run --rm -i hadolint/hadolint < Dockerfile
+
+refactor: format lint
+
+deploy:
+	#deploy goes here
+		
+all: install lint test format deploy
